@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Binary Do Now Quiz</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      border: 1px solid #dde1ea;
+      border-radius: 12px;
+      max-width: 700px;
+      width: 100%;
+      padding: 36px 40px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header .badge {
+      display: inline-block;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4f46e5;
+      margin: 28px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .question {
+      margin-bottom: 16px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px 18px;
+      transition: border-color 0.2s;
+    }
+
+    .question:focus-within {
+      border-color: #4f46e5;
+      background: #fafafe;
+    }
+
+    .q-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .q-text {
+      font-size: 14px;
+      color: #374151;
+      margin-bottom: 14px;
+    }
+
+    /* ── Scaffolding table ── */
+    .scaffold-wrap {
+      overflow-x: auto;
+      margin-bottom: 14px;
+    }
+
+    .scaffold {
+      border-collapse: collapse;
+      font-family: 'Courier New', monospace;
+      min-width: 100%;
+    }
+
+    .scaffold th, .scaffold td {
+      border: 1px solid #d1d5db;
+      text-align: center;
+      width: 46px;
+      height: 36px;
+      font-size: 14px;
+    }
+
+    /* Column-value header row */
+    .scaffold thead tr:first-child th {
+      background: #4f46e5;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 2px;
+    }
+
+    /* Bit row (binary → denary: pre-filled; denary → binary: empty hint cells) */
+    .scaffold .row-bits td {
+      background: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      color: #4f46e5;
+      padding: 6px 0;
+    }
+
+    /* Empty scaffolding cells for denary → binary */
+    .scaffold .row-bits td.empty {
+      color: #d1d5db;
+    }
+
+    /* Value row (for binary → denary: shows column × bit values as hint) */
+    .scaffold .row-vals td {
+      background: #f0f0ff;
+      font-size: 11px;
+      color: #6b7280;
+      padding: 4px 2px;
+      font-style: italic;
+    }
+
+    .scaffold .row-vals td.active {
+      color: #4f46e5;
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    /* Addition scaffold */
+    .scaffold .row-add td {
+      background: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      color: #374151;
+      padding: 5px 0;
+    }
+
+    .scaffold .row-add td.bit-1 { color: #4f46e5; }
+    .scaffold .row-add td.bit-0 { color: #9ca3af; }
+
+    .scaffold .row-add-b td {
+      background: #f9fafb;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 5px 0;
+    }
+
+    .scaffold .row-add-b td.bit-1 { color: #4f46e5; }
+    .scaffold .row-add-b td.bit-0 { color: #9ca3af; }
+
+    .scaffold .row-label th {
+      background: #f3f4f6;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-align: left;
+      padding: 4px 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Thick top border above the sum row */
+    .scaffold .row-sum td {
+      border-top: 2px solid #374151;
+      background: #fffbeb;
+      font-size: 16px;
+      font-weight: 700;
+      color: #92400e;
+      padding: 6px 0;
+    }
+
+    .answer-input {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #111827;
+      font-size: 15px;
+      font-family: 'Courier New', monospace;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .answer-input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 28px;
+      padding: 13px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .submit-btn:hover { background: #4338ca; }
+    .submit-btn:active { transform: scale(0.98); }
+
+    /* Result screen */
+    .result-screen {
+      display: none;
+      text-align: center;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(#4f46e5 var(--pct), #e5e7eb 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .score-inner {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+    }
+
+    .score-total {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .result-grade {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #4f46e5;
+    }
+
+    .result-msg {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 28px;
+    }
+
+    .download-btn {
+      padding: 12px 32px;
+      background: #059669;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .download-btn:hover { background: #047857; }
+
+    .retry-btn {
+      display: block;
+      margin: 12px auto 0;
+      background: none;
+      border: 1px solid #d1d5db;
+      color: #6b7280;
+      padding: 8px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .retry-btn:hover { border-color: #4f46e5; color: #4f46e5; }
+
+    @media (max-width: 520px) {
+      .container { padding: 24px 14px; }
+      .scaffold th, .scaffold td { width: 34px; font-size: 12px; }
+      .scaffold thead tr:first-child th { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- QUIZ SCREEN -->
+  <div id="quizScreen">
+    <div class="header">
+      <div class="badge">Do Now Activity</div>
+      <h1>Binary Quiz</h1>
+      <p class="subtitle">Year 9 &mdash; Binary &amp; Denary Conversions + Binary Addition</p>
+    </div>
+
+    <div id="questionsContainer"></div>
+
+    <button class="submit-btn" onclick="submitQuiz()">Submit Quiz</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="resultScreen" class="result-screen">
+    <div class="score-circle" id="scoreCircle">
+      <div class="score-inner">
+        <span class="score-number" id="scoreNum">0</span>
+        <span class="score-total" id="scoreTot">/ 0</span>
+      </div>
+    </div>
+    <div class="result-grade" id="resultGrade"></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <button class="download-btn" onclick="downloadPDF()">&#8595; Download Report (PDF)</button>
+    <button class="retry-btn" onclick="resetQuiz()">Try Again</button>
+  </div>
+
+</div>
+
+<script>
+const COLS = [128, 64, 32, 16, 8, 4, 2, 1];
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function toBinary8(n) {
+  return n.toString(2).padStart(8, '0');
+}
+
+function explainB2D(n) {
+  const bits = toBinary8(n).split('').map(Number);
+  const parts = COLS.filter((c, i) => bits[i] === 1).join(' + ');
+  return `${parts} = ${n}`;
+}
+
+// ─── Scaffolding table builders ──────────────────────────────────────────────
+
+// Binary → Denary: show column headers, binary digits, and working-out values
+function scaffoldB2D(binary) {
+  const bits = binary.split('').map(Number);
+  const colHeaders = COLS.map(c => `<th>${c}</th>`).join('');
+  const bitCells = bits.map(b => `<td>${b}</td>`).join('');
+  const valCells = bits.map((b, i) =>
+    b === 1
+      ? `<td class="active">${COLS[i]}</td>`
+      : `<td>0</td>`
+  ).join('');
+
+  return `
+    <div class="scaffold-wrap">
+      <table class="scaffold">
+        <thead><tr>${colHeaders}</tr></thead>
+        <tbody>
+          <tr class="row-bits">${bitCells}</tr>
+          <tr class="row-vals">${valCells}</tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// Denary → Binary: show column headers and empty cells for students to work into
+function scaffoldD2B() {
+  const colHeaders = COLS.map(c => `<th>${c}</th>`).join('');
+  const emptyCells = COLS.map(() => `<td class="empty">?</td>`).join('');
+  return `
+    <div class="scaffold-wrap">
+      <table class="scaffold">
+        <thead><tr>${colHeaders}</tr></thead>
+        <tbody>
+          <tr class="row-bits">${emptyCells}</tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// Binary Addition: show column headers, both binary rows, and a blank sum row
+function scaffoldAdd(a, b) {
+  const bitsA = toBinary8(a).split('').map(Number);
+  const bitsB = toBinary8(b).split('').map(Number);
+  const colHeaders = COLS.map(c => `<th>${c}</th>`).join('');
+
+  const rowA = bitsA.map(b => `<td class="bit-${b}">${b}</td>`).join('');
+  const rowB = bitsB.map(b => `<td class="bit-${b}">${b}</td>`).join('');
+  const sumRow = COLS.map(() => `<td></td>`).join('');
+
+  return `
+    <div class="scaffold-wrap">
+      <table class="scaffold">
+        <thead><tr>${colHeaders}</tr></thead>
+        <tbody>
+          <tr class="row-label"><th colspan="8">First number &nbsp;(${a})</th></tr>
+          <tr class="row-add">${rowA}</tr>
+          <tr class="row-label"><th colspan="8">Second number (${b})</th></tr>
+          <tr class="row-add-b">${rowB}</tr>
+          <tr class="row-sum">${sumRow}</tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ─── Question generation ──────────────────────────────────────────────────────
+
+function generateQuestions() {
+  const qs = [];
+
+  for (let i = 0; i < 3; i++) {
+    const val = randInt(1, 255);
+    qs.push({
+      section: 'Binary → Denary',
+      prompt: 'Use the table to convert this binary number to denary:',
+      scaffoldHTML: scaffoldB2D(toBinary8(val)),
+      answer: String(val),
+      type: 'b2d',
+      val,
+      explanation: `${toBinary8(val)} → ${explainB2D(val)}`
+    });
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const val = randInt(1, 255);
+    qs.push({
+      section: 'Denary → Binary',
+      prompt: `Use the table to convert <strong>${val}</strong> to 8-bit binary:`,
+      scaffoldHTML: scaffoldD2B(),
+      answer: toBinary8(val),
+      type: 'd2b',
+      val,
+      explanation: `${val} → ${toBinary8(val)}`
+    });
+  }
+
+  for (let i = 0; i < 2; i++) {
+    let a, b;
+    do {
+      a = randInt(1, 120);
+      b = randInt(1, 120);
+    } while (a + b > 255);
+    const sum = a + b;
+    qs.push({
+      section: 'Binary Addition',
+      prompt: 'Add the two binary numbers using the table. Write your answer in binary:',
+      scaffoldHTML: scaffoldAdd(a, b),
+      answer: toBinary8(sum),
+      type: 'add',
+      numA: a, numB: b,
+      explanation: `${toBinary8(a)} (${a}) + ${toBinary8(b)} (${b}) = ${toBinary8(sum)} (${sum})`
+    });
+  }
+
+  return qs;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+
+let questions = [];
+
+function renderQuestions() {
+  questions = generateQuestions();
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+
+  let currentSection = '';
+  questions.forEach((q, i) => {
+    if (q.section !== currentSection) {
+      currentSection = q.section;
+      const title = document.createElement('div');
+      title.className = 'section-title';
+      title.textContent = q.section;
+      container.appendChild(title);
+    }
+
+    const div = document.createElement('div');
+    div.className = 'question';
+    div.innerHTML = `
+      <div class="q-label">Question ${i + 1}</div>
+      <div class="q-text">${q.prompt}</div>
+      ${q.scaffoldHTML}
+      <input class="answer-input" id="ans_${i}" type="text"
+        placeholder="${q.type === 'b2d' ? 'Your denary answer (e.g. 75)' : 'Your binary answer (e.g. 01001011)'}"
+        autocomplete="off" spellcheck="false" />
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ─── Submit ───────────────────────────────────────────────────────────────────
+
+let results = [];
+
+function normalise(str) {
+  return str.trim().replace(/\s+/g, '').toLowerCase();
+}
+
+function submitQuiz() {
+  results = questions.map((q, i) => {
+    const raw = document.getElementById(`ans_${i}`).value;
+    const isCorrect = normalise(raw) === normalise(q.answer);
+    return { ...q, given: raw.trim(), isCorrect };
+  });
+
+  const score = results.filter(r => r.isCorrect).length;
+  const total = results.length;
+  const pct = Math.round((score / total) * 100);
+
+  document.getElementById('quizScreen').style.display = 'none';
+  const rs = document.getElementById('resultScreen');
+  rs.style.display = 'block';
+
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreTot').textContent = `/ ${total}`;
+  document.getElementById('scoreCircle').style.setProperty('--pct', `${pct}%`);
+
+  let grade, msg;
+  if (pct === 100)    { grade = 'Perfect!';      msg = 'Outstanding — full marks!'; }
+  else if (pct >= 80) { grade = 'Excellent';     msg = 'Great understanding of binary. Minor gaps to review.'; }
+  else if (pct >= 60) { grade = 'Good';          msg = 'Solid effort. Check the questions you missed.'; }
+  else if (pct >= 40) { grade = 'Developing';    msg = 'Some understanding shown. Review the conversion methods.'; }
+  else                { grade = 'Needs Practice';msg = 'Keep practising — binary gets easier with repetition!'; }
+
+  document.getElementById('resultGrade').textContent = grade;
+  document.getElementById('resultMsg').textContent = msg;
+}
+
+// ─── PDF ──────────────────────────────────────────────────────────────────────
+
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const pageW = 210;
+  const pageH = 297;
+  const margin = 18;
+  const contentW = pageW - margin * 2;
+  let y = 0;
+
+  const score = results.filter(r => r.isCorrect).length;
+  const total = results.length;
+  const pct = Math.round((score / total) * 100);
+
+  let gradeLabel, gradeColour;
+  if (pct === 100)    { gradeLabel = 'Perfect!';      gradeColour = [5, 150, 105]; }
+  else if (pct >= 80) { gradeLabel = 'Excellent';     gradeColour = [16, 185, 129]; }
+  else if (pct >= 60) { gradeLabel = 'Good';          gradeColour = [234, 179, 8]; }
+  else if (pct >= 40) { gradeLabel = 'Developing';    gradeColour = [249, 115, 22]; }
+  else                { gradeLabel = 'Needs Practice';gradeColour = [239, 68, 68]; }
+
+  // Header
+  doc.setFillColor(79, 70, 229);
+  doc.rect(0, 0, pageW, 38, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Binary Do Now Quiz — Report', margin, 15);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(200, 196, 255);
+  doc.text(`Date: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin, 25);
+  doc.text('Year 9 Computer Science', pageW - margin, 25, { align: 'right' });
+
+  y = 48;
+
+  // Score box
+  doc.setFillColor(249, 250, 251);
+  doc.roundedRect(margin, y, contentW, 26, 4, 4, 'F');
+  doc.setFillColor(...gradeColour);
+  doc.roundedRect(margin, y, 5, 26, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(26);
+  doc.setTextColor(17, 24, 39);
+  doc.text(`${score} / ${total}`, margin + 12, y + 16);
+  doc.setFontSize(11);
+  doc.setTextColor(...gradeColour);
+  doc.text(gradeLabel, margin + 46, y + 10);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99);
+  const feedbackMap = {
+    'Perfect!':       'Outstanding! You have mastered all three topics.',
+    'Excellent':      'Great work — review any missed questions to achieve full marks.',
+    'Good':           'Solid understanding. Focus on the questions you found tricky.',
+    'Developing':     'Keep practising. Work through column values and carry rules.',
+    'Needs Practice': "Don't give up! Practise binary conversion using the column method."
+  };
+  doc.text(feedbackMap[gradeLabel], margin + 46, y + 19);
+  y += 34;
+
+  // Helper: draw the 8-column scaffold table in the PDF
+  function drawScaffoldTable(startY, bitsRow, secondBitsRow, sumRow, labels) {
+    const cellW = contentW / 8;
+    const headerH = 7;
+    const rowH = 8;
+
+    // Column value headers
+    COLS.forEach((col, ci) => {
+      const x = margin + ci * cellW;
+      doc.setFillColor(79, 70, 229);
+      doc.rect(x, startY, cellW, headerH, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(col), x + cellW / 2, startY + 5, { align: 'center' });
+    });
+
+    let rowY = startY + headerH;
+
+    function drawRow(bits, bgRGB, textRGB, label) {
+      if (label) {
+        doc.setFillColor(243, 244, 246);
+        doc.rect(margin, rowY, contentW, 5, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(107, 114, 128);
+        doc.text(label, margin + 2, rowY + 3.5);
+        rowY += 5;
+      }
+      bits.forEach((bit, ci) => {
+        const x = margin + ci * cellW;
+        doc.setFillColor(...bgRGB);
+        doc.rect(x, rowY, cellW, rowH, 'F');
+        doc.setDrawColor(209, 213, 219);
+        doc.rect(x, rowY, cellW, rowH, 'S');
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(...textRGB);
+        doc.text(String(bit), x + cellW / 2, rowY + 5.5, { align: 'center' });
+      });
+      rowY += rowH;
+    }
+
+    // Main bits row
+    if (labels && labels[0]) {
+      drawRow(bitsRow, [255, 255, 255], [79, 70, 229], labels[0]);
+    } else {
+      drawRow(bitsRow, [255, 255, 255], [79, 70, 229], null);
+    }
+
+    // Value hint row (binary→denary only)
+    if (sumRow === 'hint') {
+      const valBits = bitsRow.map((b, i) => b === 1 ? COLS[i] : 0);
+      valBits.forEach((v, ci) => {
+        const x = margin + ci * cellW;
+        doc.setFillColor(240, 240, 255);
+        doc.rect(x, rowY, cellW, rowH - 2, 'F');
+        doc.setDrawColor(209, 213, 219);
+        doc.rect(x, rowY, cellW, rowH - 2, 'S');
+        doc.setFont('helvetica', v > 0 ? 'bold' : 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(v > 0 ? 79 : 156, v > 0 ? 70 : 163, v > 0 ? 229 : 175);
+        doc.text(String(v), x + cellW / 2, rowY + 4.5, { align: 'center' });
+      });
+      rowY += rowH - 2;
+    }
+
+    // Second bits row (addition only)
+    if (secondBitsRow && labels && labels[1]) {
+      drawRow(secondBitsRow, [249, 250, 251], [79, 70, 229], labels[1]);
+    } else if (secondBitsRow) {
+      drawRow(secondBitsRow, [249, 250, 251], [79, 70, 229], null);
+    }
+
+    // Sum row (addition only — blank)
+    if (sumRow && sumRow !== 'hint') {
+      // thick top border
+      doc.setDrawColor(55, 65, 81);
+      doc.setLineWidth(0.6);
+      doc.line(margin, rowY, margin + contentW, rowY);
+      doc.setLineWidth(0.2);
+      const emptySumBits = new Array(8).fill(' ');
+      drawRow(emptySumBits, [255, 251, 235], [146, 64, 14], null);
+    }
+
+    return rowY;
+  }
+
+  // Per-question breakdown
+  const sections = [...new Set(results.map(r => r.section))];
+  sections.forEach(section => {
+    const sectionQs = results.map((r, i) => ({ ...r, num: i + 1 })).filter(r => r.section === section);
+
+    if (y > pageH - 70) { doc.addPage(); y = 20; }
+
+    doc.setFillColor(238, 237, 254);
+    doc.rect(margin, y, contentW, 8, 'F');
+    doc.setFillColor(79, 70, 229);
+    doc.rect(margin, y, 3, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(55, 48, 163);
+    doc.text(section.toUpperCase(), margin + 7, y + 5.5);
+    y += 12;
+
+    sectionQs.forEach(r => {
+      // Estimate row height needed
+      const neededH = r.type === 'add' ? 80 : 60;
+      if (y > pageH - neededH) { doc.addPage(); y = 20; }
+
+      // Question header
+      doc.setFillColor(r.isCorrect ? 240 : 254, r.isCorrect ? 253 : 242, r.isCorrect ? 244 : 242);
+      doc.roundedRect(margin, y, contentW, 10, 2, 2, 'F');
+      doc.setFillColor(...(r.isCorrect ? [16, 185, 129] : [239, 68, 68]));
+      doc.roundedRect(margin, y, 4, 10, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(79, 70, 229);
+      doc.text(`Q${r.num}`, margin + 7, y + 7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(55, 65, 81);
+      // Prompt (strip HTML tags for PDF)
+      const promptText = r.prompt.replace(/<[^>]+>/g, '');
+      doc.text(promptText, margin + 17, y + 7);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...(r.isCorrect ? [5, 150, 105] : [220, 38, 38]));
+      doc.text(r.isCorrect ? '✓' : '✗', pageW - margin - 7, y + 7);
+      y += 13;
+
+      // Draw scaffold
+      if (r.type === 'b2d') {
+        const bits = toBinary8(r.val).split('').map(Number);
+        y = drawScaffoldTable(y, bits, null, 'hint', null);
+      } else if (r.type === 'd2b') {
+        const answerBits = r.answer.split('').map(Number);
+        y = drawScaffoldTable(y, answerBits, null, null, null);
+      } else if (r.type === 'add') {
+        const bitsA = toBinary8(r.numA).split('').map(Number);
+        const bitsB = toBinary8(r.numB).split('').map(Number);
+        y = drawScaffoldTable(y, bitsA, bitsB, true,
+          [`First number (${r.numA})`, `Second number (${r.numB})`]);
+      }
+
+      y += 3;
+
+      // Student answer line
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(55, 65, 81);
+      doc.text('Your answer:', margin + 2, y + 4);
+      doc.setFont('courier', 'bold');
+      doc.setTextColor(r.isCorrect ? 5 : 220, r.isCorrect ? 150 : 38, r.isCorrect ? 105 : 38);
+      doc.text(r.given || '(blank)', margin + 30, y + 4);
+      if (!r.isCorrect) {
+        doc.setTextColor(5, 150, 105);
+        doc.text(`Correct: ${r.answer}`, margin + 80, y + 4);
+      }
+      y += 10;
+    });
+    y += 4;
+  });
+
+  // Revision tips
+  if (y > pageH - 60) { doc.addPage(); y = 20; }
+  doc.setFillColor(79, 70, 229);
+  doc.rect(margin, y, contentW, 8, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text('REVISION TIPS', margin + 5, y + 5.5);
+  y += 12;
+
+  const tips = [
+    ['Binary → Denary', 'Write column values (128, 64, 32, 16, 8, 4, 2, 1). Multiply each bit by its column value and add the results.'],
+    ['Denary → Binary', 'Subtract the largest power of 2 that fits. Repeat with the remainder. Place 1 in each used column, 0 in unused columns.'],
+    ['Binary Addition', 'Add column by column right to left: 0+0=0, 0+1=1, 1+1=10 (write 0 carry 1), 1+1+1=11 (write 1 carry 1).'],
+  ];
+  tips.forEach(([title, body]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(79, 70, 229);
+    doc.text(`• ${title}:`, margin + 4, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(55, 65, 81);
+    const lines = doc.splitTextToSize(body, contentW - 10);
+    doc.text(lines, margin + 4, y + 5);
+    y += 5 + lines.length * 5 + 3;
+  });
+
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175);
+  doc.text('Generated by Binary Do Now Quiz', pageW / 2, pageH - 8, { align: 'center' });
+
+  doc.save(`Binary_Quiz_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+
+function resetQuiz() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  renderQuestions();
+}
+
+renderQuestions();
+</script>
+</body>
+</html>
